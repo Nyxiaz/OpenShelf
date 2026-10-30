@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Profile{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+<header class="profile-heading">
+    <p class="eyebrow">Account</p>
+    <h1>My profile</h1>
+    <p class="lead-text">Signed in as <strong>{{ current_user.username }}</strong> ({{ current_user.role }}).</p>
+    <p class="muted">Member since {{ current_user.created_at.strftime('%d %b %Y') }}.</p>
+</header>
+
+<div class="profile-layout">
+    <aside class="profile-card">
+        {% if current_user.profile_filename %}
+        <img class="profile-avatar" src="{{ url_for('uploaded_cover', filename=current_user.profile_filename) }}" alt="Your profile picture">
+        {% else %}
+        <div class="profile-avatar profile-avatar-placeholder" aria-hidden="true">{{ (current_user.display_name or current_user.username)[:1]|upper }}</div>
+        {% endif %}
+        <h2>{{ current_user.display_name or current_user.username }}</h2>
+        <p class="muted">{{ current_user.email }}</p>
+        {% if current_user.bio %}<p>{{ current_user.bio }}</p>{% endif %}
+        {% if current_user.favourite_genres or current_user.favourite_book or current_user.currently_reading or current_user.annual_reading_goal %}
+        <dl class="profile-details">
+            {% if current_user.favourite_genres %}<dt>Favourite genres</dt><dd>{{ current_user.favourite_genres }}</dd>{% endif %}
+            {% if current_user.favourite_book %}<dt>Favourite book</dt><dd>{{ current_user.favourite_book }}</dd>{% endif %}
+            {% if current_user.currently_reading %}<dt>Currently reading</dt><dd>{{ current_user.currently_reading }}</dd>{% endif %}
+            {% if current_user.annual_reading_goal %}<dt>Annual goal</dt><dd>{{ current_user.annual_reading_goal }} books</dd>{% endif %}
+        </dl>
+        {% endif %}
+    </aside>
+
+    <form method="post" enctype="multipart/form-data" class="auth-form profile-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label class="form-label" for="username">Username</label>
+            <input class="form-control" id="username" value="{{ current_user.username }}" disabled>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" maxlength="120" value="{{ form.email }}" autocomplete="email" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="display_name">Display name</label>
+            <input class="form-control" id="display_name" name="display_name" maxlength="80" value="{{ form.display_name }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="bio">Bio</label>
+            <textarea class="form-control" id="bio" name="bio" rows="4" maxlength="500">{{ form.bio }}</textarea>
+            <div class="form-text">Up to 500 characters.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="favourite_genres">Favourite genres</label>
+            <input class="form-control" id="favourite_genres" name="favourite_genres" maxlength="255" value="{{ form.favourite_genres }}" placeholder="e.g. Historical fiction, mystery">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="favourite_book">Favourite book</label>
+            <input class="form-control" id="favourite_book" name="favourite_book" maxlength="120" value="{{ form.favourite_book }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="currently_reading">Currently reading</label>
+            <input class="form-control" id="currently_reading" name="currently_reading" maxlength="120" value="{{ form.currently_reading }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="annual_reading_goal">Annual reading goal</label>
+            <input class="form-control" id="annual_reading_goal" name="annual_reading_goal" type="number" min="1" max="500" value="{{ form.annual_reading_goal }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="profile_picture">Profile picture</label>
+            <input class="form-control" id="profile_picture" name="profile_picture" type="file" accept=".jpg,.jpeg,.png,.gif,.webp">
+            <div class="form-text">JPG, PNG, GIF or WEBP; 2 MB maximum.</div>
+            {% if current_user.profile_filename %}
+            <div class="form-check mt-2">
+                <input class="form-check-input" id="remove_profile_picture" name="remove_profile_picture" type="checkbox" value="1">
+                <label class="form-check-label" for="remove_profile_picture">Remove current picture</label>
+            </div>
+            {% endif %}
+        </div>
+        <div class="inline-form">
+            <button class="btn btn-accent" type="submit">Save profile</button>
+            <a class="btn btn-ghost" href="{{ url_for('home') }}">Cancel</a>
+        </div>
+    </form>
+</div>
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Register{% endblock %}
+
+{% block content %}
+<section class="auth-page">
+<div class="auth-panel">
+    <p class="eyebrow">Account</p>
+    <h1>Create an account</h1>
+    <p class="lead-text">Registration always creates a normal reader account. Administrators are created separately.</p>
+
+    <form method="post" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label class="form-label" for="username">Username</label>
+            <input class="form-control" id="username" name="username" value="{{ form.username }}" minlength="3" maxlength="50" autocomplete="username" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" value="{{ form.email }}" maxlength="120" autocomplete="email" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="confirm_password">Confirm password</label>
+            <input class="form-control" id="confirm_password" name="confirm_password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" id="guidelines_agreement" name="guidelines_agreement" type="checkbox" value="1" {% if guidelines_accepted %}checked{% endif %} required>
+            <label class="form-check-label" for="guidelines_agreement">
+                I agree to the <a href="{{ url_for('guidelines') }}" target="_blank" rel="noopener">Community Guidelines</a>.
+            </label>
+        </div>
+        <button class="btn btn-accent" type="submit">Register</button>
+    </form>
+    <p class="auth-switch">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+</section>
+</div>
+{% endblock %}

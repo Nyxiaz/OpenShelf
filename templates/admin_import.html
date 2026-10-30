@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Bulk book import{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">Admin · Catalogue</p>
+    <h1>Bulk book import</h1>
+    <p class="lead-text">Preview book details and duplicate checks before adding anything to the catalogue.</p>
+    <a class="btn btn-ghost" href="{{ url_for('admin_dashboard') }}">Back to dashboard</a>
+</section>
+
+{% if error_message %}
+<div class="alert alert-warning" role="alert">{{ error_message }}</div>
+{% endif %}
+
+{% if summary %}
+<section class="admin-section import-summary" aria-live="polite">
+    <h2>Import complete</h2>
+    <div class="stats-row">
+        <article class="stat-card"><p>Imported</p><strong>{{ summary.imported }}</strong></article>
+        <article class="stat-card"><p>Skipped</p><strong>{{ summary.skipped }}</strong></article>
+        <article class="stat-card"><p>Failed</p><strong>{{ summary.failed }}</strong></article>
+    </div>
+    <p>Skipped rows were duplicates; failed rows had validation, storage, or database errors. Existing records were not overwritten.</p>
+    {% if summary.skipped_rows or summary.failed_rows %}
+    <div class="import-row-outcomes">
+        {% for outcome in summary.skipped_rows %}
+        <p class="import-issue import-duplicate">Row {{ outcome.row_number }} · {{ outcome.title }} — {{ outcome.reason }}</p>
+        {% endfor %}
+        {% for outcome in summary.failed_rows %}
+        <p class="import-issue import-error">Row {{ outcome.row_number }} · {{ outcome.title }} — {{ outcome.reason }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="admin-section import-panel">
+    <h2>CSV and cover ZIP</h2>
+    <p>CSV is limited to 2 MB and 50 book rows. Optional ZIP is limited to 50 MB, 500 entries, 2 MB per file, and 100 MB total uncompressed.</p>
+    <p>Required columns: <strong>Title, Author, Genre</strong>. Supported optional columns: ISBN, Description, Publisher, Publication Year, Cover Filename, Cover URL.</p>
+    <p>Cover Filename should match an image name inside the ZIP. If omitted, an image whose filename stem matches the normalized book title can be matched.</p>
+    <a class="btn btn-ghost mb-3" href="{{ url_for('admin_book_import_sample') }}">Download sample CSV</a>
+    <form method="post" action="{{ url_for('admin_book_import_csv_preview') }}" enctype="multipart/form-data" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label class="form-label" for="csv_file">Book metadata CSV</label>
+            <input class="form-control" id="csv_file" name="csv_file" type="file" accept=".csv,text/csv" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="covers_zip">Cover images ZIP (optional)</label>
+            <input class="form-control" id="covers_zip" name="covers_zip" type="file" accept=".zip,application/zip">
+        </div>
+        <button class="btn btn-accent" type="submit">Preview CSV import</button>
+    </form>
+</section>
+
+<section class="admin-section import-panel">
+    <h2>Search Google Books</h2>
+    <p>Search by title, author, ISBN, or a general query. Choose results to review before import. Searches use the Google Books API from the server.</p>
+    <form method="post" action="{{ url_for('admin_book_import_google_search') }}" class="admin-user-search">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label class="visually-hidden" for="google-query">Google Books search</label>
+        <input class="form-control" id="google-query" name="query" type="search" maxlength="200" value="{{ search_query }}" placeholder="Title, author, ISBN, or keywords" required>
+        <input type="hidden" name="start_index" value="0">
+        <button class="btn btn-accent" type="submit">Search</button>
+    </form>
+
+    {% if results %}
+    <form method="post" action="{{ url_for('admin_book_import_google_preview') }}" class="google-results-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="search_token" value="{{ search_token }}">
+        <div class="google-result-list">
+            {% for book in results %}
+            <label class="google-result-card">
+                <input class="form-check-input" type="checkbox" name="selected_volume_ids" value="{{ book.google_volume_id }}">
+                {% if book.cover_url %}
+                <img class="google-result-cover" src="{{ book.cover_url }}" alt="" loading="lazy">
+                {% else %}
+                <span class="google-result-cover google-result-cover-empty">No cover</span>
+                {% endif %}
+                <span class="google-result-copy">
+                    <strong>{{ book.title or 'Untitled result' }}</strong>
+                    <span>{{ book.author or 'Author unavailable' }}</span>
+                    {% if book.isbn %}<span>ISBN {{ book.isbn }}</span>{% endif %}
+                    {% if book.genre %}<span>{{ book.genre }}</span>{% endif %}
+                    {% if book.publisher %}<span>{{ book.publisher }}{% if book.publication_year %}, {{ book.publication_year }}{% endif %}</span>{% endif %}
+                    {% if book.description %}<span>{{ book.description[:360] }}{% if book.description|length > 360 %}…{% endif %}</span>{% endif %}
+                </span>
+            </label>
+            {% endfor %}
+        </div>
+        <button class="btn btn-accent mt-3" type="submit">Preview selected books</button>
+    </form>
+
+    {% if search_total > 10 %}
+    <div class="inline-form mt-3">
+        {% if search_start > 0 %}
+        <form method="post" action="{{ url_for('admin_book_import_google_search') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="query" value="{{ search_query }}">
+            <input type="hidden" name="start_index" value="{{ [search_start - 10, 0]|max }}">
+            <button class="btn btn-ghost" type="submit">Previous results</button>
+        </form>
+        {% endif %}
+        {% if search_start + 10 < search_total and search_start < 1000 %}
+        <form method="post" action="{{ url_for('admin_book_import_google_search') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="query" value="{{ search_query }}">
+            <input type="hidden" name="start_index" value="{{ search_start + 10 }}">
+            <button class="btn btn-ghost" type="submit">Next results</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% elif search_query %}
+    <div class="empty-state"><p>No Google Books results were found.</p></div>
+    {% endif %}
+</section>
+
+<script>
+document.querySelectorAll("form").forEach((form) => {
+    form.addEventListener("submit", () => {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = "Please wait…";
+        }
+    }, { once: true });
+});
+</script>
+{% endblock %}

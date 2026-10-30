@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% from "macros.html" import cover_block, rating_line %}
+
+{% block title %}{{ book.title }} · OpenShelf{% endblock %}
+
+{% block content %}
+<p class="back-link"><a href="{{ url_for('books') }}">← Back to explore</a></p>
+
+<section class="detail-layout">
+    <div class="detail-cover">
+        {{ cover_block(book) }}
+    </div>
+    <div class="detail-copy">
+        <p class="genre-chip">{{ book.genre }}</p>
+        <h1>{{ book.title }}</h1>
+        <p class="author">{{ book.author }}</p>
+        {{ rating_line(book) }}
+        <ul class="meta-list">
+            {% if book.publisher %}<li>Publisher: {{ book.publisher }}</li>{% endif %}
+            {% if book.publication_year %}<li>Year: {{ book.publication_year }}</li>{% endif %}
+            {% if book.isbn %}<li>ISBN: {{ book.isbn }}</li>{% endif %}
+        </ul>
+        {% if book.description %}
+        <p class="book-description">{{ book.description }}</p>
+        {% else %}
+        <p class="book-description muted">No description yet.</p>
+        {% endif %}
+
+        {% if is_logged_in %}
+        <form method="post" action="{{ url_for('toggle_reading_list', book_id=book.id) }}" class="inline-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="{% if list_entry %}update{% else %}add{% endif %}">
+            <label class="visually-hidden" for="reading-status">Reading status</label>
+            <select class="form-select reading-status-select" id="reading-status" name="status">
+                {% for status, label in reading_statuses.items() %}
+                <option value="{{ status }}" {% if list_entry and list_entry.status == status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-accent" type="submit">{% if list_entry %}Update reading list{% else %}Add to reading list{% endif %}</button>
+        </form>
+        {% if list_entry %}
+        <form method="post" action="{{ url_for('toggle_reading_list', book_id=book.id) }}" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="remove">
+            <button class="btn btn-ghost" type="submit">Remove from reading list</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="muted">Log in to save this book or write a review.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="review-section">
+    <h2>Reviews</h2>
+
+    {% if is_logged_in %}
+    <div class="review-form-card">
+        {% if own_review %}
+        <p class="status-note">Your review is currently <strong>{{ own_review.status }}</strong>. Editing it sends it back for approval.</p>
+        {% endif %}
+        <form method="post" action="{{ url_for('save_review', book_id=book.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="mb-3">
+                <label class="form-label" for="rating">Rating</label>
+                <select class="form-select" id="rating" name="rating" required>
+                    {% for value in ratings %}
+                    <option value="{{ value }}" {% if own_review and own_review.rating|float == value|float %}selected{% elif not own_review and value|string == '5.0' %}selected{% endif %}>{{ value }} stars</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="review_text">Your review</label>
+                <textarea class="form-control" id="review_text" name="review_text" rows="5" required minlength="10">{{ own_review.review_text if own_review else '' }}</textarea>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="is_spoiler" name="is_spoiler" {% if own_review and own_review.is_spoiler %}checked{% endif %}>
+                <label class="form-check-label" for="is_spoiler">This review contains spoilers</label>
+            </div>
+            <button class="btn btn-accent" type="submit">{% if own_review %}Update review{% else %}Submit review{% endif %}</button>
+        </form>
+        {% if own_review %}
+        <form method="post" action="{{ url_for('delete_review', review_id=own_review.id) }}" class="mt-2" onsubmit="return confirm('Delete your review?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="next" value="book">
+            <button class="btn btn-ghost" type="submit">Delete my review</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if reviews %}
+    <div class="review-list">
+        {% for review in reviews %}
+        <article class="review-card">
+            <p class="review-meta">{{ review.username }} · ★ {{ review.rating }} · {{ review.created_at.strftime('%d %b %Y') }}</p>
+            {% if review.is_spoiler %}
+            <button class="btn btn-ghost spoiler-btn" type="button" data-reveal-spoiler="spoiler-{{ review.id }}">Show spoiler</button>
+            <p class="review-text spoiler-hidden" id="spoiler-{{ review.id }}">{{ review.review_text }}</p>
+            {% else %}
+            <p class="review-text">{{ review.review_text }}</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No approved reviews yet.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

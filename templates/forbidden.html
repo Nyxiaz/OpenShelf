@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Access denied{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">403</p>
+    <h1>You do not have access to this page.</h1>
+    <p class="lead-text">This area is for administrators only.</p>
+    <a class="btn btn-accent" href="{{ url_for('home') }}">Return home</a>
+</section>
+{% endblock %}

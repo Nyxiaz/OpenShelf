@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Admin{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">Admin</p>
+    <h1>Dashboard</h1>
+    <p class="lead-text">Manage books and moderate reviews. Public averages only include approved reviews.</p>
+    <a class="btn btn-accent" href="{{ url_for('admin_new_book') }}">Add a book</a>
+    <a class="btn btn-ghost" href="{{ url_for('admin_book_import') }}">Bulk import books</a>
+</section>
+
+<div class="stats-row">
+    <article class="stat-card"><p>Users</p><strong>{{ stats.user_count or 0 }}</strong></article>
+    <article class="stat-card"><p>Books</p><strong>{{ stats.book_count or 0 }}</strong></article>
+    <article class="stat-card"><p>Reviews</p><strong>{{ stats.review_count or 0 }}</strong></article>
+    <article class="stat-card"><p>Approved average</p><strong>{{ avg_rating_display or '—' }}</strong></article>
+</div>
+
+<section class="admin-section">
+    <h2>Pending reviews</h2>
+    {% if pending_reviews %}
+    <div class="review-list">
+        {% for review in pending_reviews %}
+        <article class="review-card">
+            <span class="status-badge status-pending">Pending review</span>
+            <p class="review-meta">{{ review.username }} on <a href="{{ url_for('book_detail', book_id=review.book_id) }}">{{ review.title }}</a> · ★ {{ review.rating }}</p>
+            <p class="review-text">{{ review.review_text }}</p>
+            <form method="post" action="{{ url_for('admin_moderate_review', review_id=review.id) }}" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn btn-accent" type="submit" name="action" value="approved">Approve</button>
+                <button class="btn btn-ghost" type="submit" name="action" value="rejected">Reject</button>
+            </form>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><p>No reviews are waiting for moderation.</p></div>
+    {% endif %}
+</section>
+
+<section class="admin-section">
+    <h2>User management</h2>
+    <form class="admin-user-search" method="get" action="{{ url_for('admin_dashboard') }}">
+        <label class="visually-hidden" for="user-search">Search username or email</label>
+        <input class="form-control" id="user-search" name="user_q" type="search" value="{{ user_search }}" placeholder="Search username or email">
+        <button class="btn btn-ghost" type="submit">Search</button>
+    </form>
+    {% if users %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Account status</th>
+                    <th>Joined</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.role|capitalize }}</td>
+                    <td><span class="status-badge {{ 'status-active' if user.is_active else 'status-inactive' }}">{{ 'Active' if user.is_active else 'Banned' }}</span></td>
+                    <td>{{ user.created_at.strftime('%d %b %Y') }}</td>
+                    <td class="table-actions">
+                        <a class="btn btn-ghost" href="{{ url_for('admin_user_detail', user_id=user.id) }}">View details</a>
+                        {% if user.role == 'user' %}
+                        <form method="post" action="{{ url_for('admin_ban_user' if user.is_active else 'admin_unban_user', user_id=user.id) }}" onsubmit="return confirm('{{ 'Ban' if user.is_active else 'Unban' }} this user account?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button class="btn btn-ghost" type="submit">{{ 'Ban' if user.is_active else 'Unban' }}</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><p>{% if user_search %}No users matched that search.{% else %}No registered users yet.{% endif %}</p></div>
+    {% endif %}
+</section>
+
+<section class="admin-section">
+    <h2>Books</h2>
+    {% if books %}
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Rating</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in books %}
+                <tr>
+                    <td><a class="table-book-link" href="{{ url_for('book_detail', book_id=book.id) }}">{{ book.title }}</a></td>
+                    <td>{{ book.author }}</td>
+                    <td>{{ book.genre }}</td>
+                    <td>{{ book.avg_rating_display or 'No ratings yet' }}</td>
+                    <td class="table-actions">
+                        <a class="btn btn-ghost" href="{{ url_for('admin_edit_book', book_id=book.id) }}">Edit</a>
+                        <form method="post" action="{{ url_for('admin_delete_book', book_id=book.id) }}" onsubmit="return confirm('Delete this book and its reviews?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                            <button class="btn btn-ghost" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state"><p>No books yet. Add the first title to start the catalogue.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

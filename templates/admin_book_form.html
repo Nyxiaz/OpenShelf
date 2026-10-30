@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == 'edit' %}Edit book{% else %}Add book{% endif %} · OpenShelf{% endblock %}
+
+{% block content %}
+<section class="auth-panel wide-panel">
+    <p class="eyebrow">Admin</p>
+    <h1>{% if mode == 'edit' %}Edit book{% else %}Add a book{% endif %}</h1>
+    <p class="lead-text">Title, author and genre are required. Covers can be a URL or an uploaded image.</p>
+
+    <form method="post" enctype="multipart/form-data" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label class="form-label" for="title">Title</label>
+            <input class="form-control" id="title" name="title" value="{{ form.title }}" required maxlength="200">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="author">Author</label>
+            <input class="form-control" id="author" name="author" value="{{ form.author }}" required maxlength="200">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="genre">Genre</label>
+            <input class="form-control" id="genre" name="genre" value="{{ form.genre }}" required maxlength="80">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="5">{{ form.description }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="publisher">Publisher</label>
+            <input class="form-control" id="publisher" name="publisher" value="{{ form.publisher }}" maxlength="200">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="publication_year">Publication year</label>
+            <input class="form-control" id="publication_year" name="publication_year" value="{{ form.publication_year }}" inputmode="numeric">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="isbn">ISBN</label>
+            <input class="form-control" id="isbn" name="isbn" value="{{ form.isbn }}" maxlength="20">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="cover_url">Cover URL</label>
+            <input class="form-control" id="cover_url" name="cover_url" value="{{ form.cover_url }}" maxlength="500">
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="cover_file">Or upload a cover</label>
+            <input class="form-control" id="cover_file" name="cover_file" type="file" accept=".jpg,.jpeg,.png,.gif,.webp">
+        </div>
+        <button class="btn btn-accent" type="submit">{% if mode == 'edit' %}Save changes{% else %}Add book{% endif %}</button>
+        <a class="btn btn-ghost" href="{{ url_for('admin_dashboard') }}">Cancel</a>
+    </form>
+</section>
+{% endblock %}

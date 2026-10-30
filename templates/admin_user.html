@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · User details{% endblock %}
+
+{% block content %}
+<p class="back-link"><a href="{{ url_for('admin_dashboard') }}">← Back to admin dashboard</a></p>
+
+<section class="profile-page">
+    <header class="profile-heading">
+        <p class="eyebrow">Admin · User management</p>
+        <h1>{{ profile.display_name or profile.username }}</h1>
+        <p class="lead-text">@{{ profile.username }} · {{ profile.role|capitalize }}</p>
+    </header>
+
+    <section class="admin-section">
+        <h2>Profile</h2>
+        <div class="profile-layout admin-user-detail-layout">
+            <aside class="profile-card">
+                {% if profile.profile_filename %}
+                <img class="profile-avatar" src="{{ url_for('uploaded_cover', filename=profile.profile_filename) }}" alt="Profile picture for {{ profile.username }}">
+                {% else %}
+                <div class="profile-avatar profile-avatar-placeholder" aria-hidden="true">{{ (profile.display_name or profile.username)[:1]|upper }}</div>
+                {% endif %}
+                <h2>{{ profile.display_name or profile.username }}</h2>
+                <p class="muted">@{{ profile.username }}</p>
+                <p><span class="status-badge {{ 'status-active' if profile.is_active else 'status-inactive' }}">{{ 'Active' if profile.is_active else 'Banned' }}</span></p>
+                <p class="muted">Joined {{ profile.created_at.strftime('%d %b %Y') }}</p>
+            </aside>
+            <div class="profile-card admin-user-profile-details">
+                <dl class="profile-details">
+                    <dt>Bio</dt><dd>{{ profile.bio or 'Not provided' }}</dd>
+                    <dt>Favourite genres</dt><dd>{{ profile.favourite_genres or 'Not provided' }}</dd>
+                    <dt>Favourite book</dt><dd>{{ profile.favourite_book or 'Not provided' }}</dd>
+                    <dt>Currently reading</dt><dd>{{ profile.currently_reading or 'Not provided' }}</dd>
+                    <dt>Annual reading goal</dt><dd>{{ profile.annual_reading_goal ~ ' books' if profile.annual_reading_goal else 'Not provided' }}</dd>
+                </dl>
+            </div>
+        </div>
+    </section>
+
+    <section class="admin-section">
+        <h2>Reviews and ratings</h2>
+        {% if reviews %}
+        <div class="review-list">
+            {% for review in reviews %}
+            <article class="review-card">
+                <p class="status-badge status-{{ review.status }}">{{ review.status|capitalize }}</p>
+                <h3><a href="{{ url_for('book_detail', book_id=review.book_id) }}">{{ review.title }}</a></h3>
+                <p class="author">{{ review.author }} · ★ {{ review.rating }}</p>
+                <p class="review-text">{{ review.review_text }}</p>
+                {% if review.is_spoiler %}<p class="review-meta">Marked as containing spoilers</p>{% endif %}
+                <p class="review-meta">Updated {{ review.updated_at.strftime('%d %b %Y') }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><p>This user has not written any reviews.</p></div>
+        {% endif %}
+    </section>
+
+    <section class="admin-section">
+        <h2>Reading list</h2>
+        {% if reading_list %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr><th>Book</th><th>Author</th><th>Status</th><th>Added</th></tr>
+                </thead>
+                <tbody>
+                    {% for entry in reading_list %}
+                    <tr>
+                        <td><a class="table-book-link" href="{{ url_for('book_detail', book_id=entry.book_id) }}">{{ entry.title }}</a></td>
+                        <td>{{ entry.author }}</td>
+                        <td>{{ reading_statuses.get(entry.status, entry.status) }}</td>
+                        <td>{{ entry.created_at.strftime('%d %b %Y') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state"><p>This user's reading list is empty.</p></div>
+        {% endif %}
+    </section>
+</section>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · Not found{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">404</p>
+    <h1>That page was not found.</h1>
+    <p class="lead-text">The book or page you asked for is not in OpenShelf.</p>
+    <a class="btn btn-accent" href="{{ url_for('books') }}">Explore books</a>
+</section>
+{% endblock %}

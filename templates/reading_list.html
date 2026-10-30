@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "macros.html" import book_card %}
+
+{% block title %}OpenShelf · Reading list{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">Library</p>
+    <h1>My reading list</h1>
+    <p class="lead-text">Keep your next reads close, update each book as you go, and celebrate the ones you finish.</p>
+</section>
+
+<form class="reading-filter" method="get" action="{{ url_for('reading_list') }}">
+    <label class="form-label" for="reading-filter">Show</label>
+    <select class="form-select" id="reading-filter" name="status" onchange="this.form.submit()">
+        <option value="">All books</option>
+        {% for status, label in reading_statuses.items() %}
+        <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <noscript><button class="btn btn-ghost" type="submit">Apply filter</button></noscript>
+</form>
+
+{% if books %}
+<div class="row g-4 book-grid">
+    {% for book in books %}
+    <div class="col-sm-6 col-xl-3">
+        {{ book_card(book) }}
+        <form method="post" action="{{ url_for('toggle_reading_list', book_id=book.id) }}" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="update">
+            <input type="hidden" name="next" value="list">
+            <input type="hidden" name="filter_status" value="{{ status_filter }}">
+            <label class="form-label" for="status-{{ book.id }}">Reading status</label>
+            <select class="form-select mb-2" id="status-{{ book.id }}" name="status">
+                {% for status, label in reading_statuses.items() %}
+                <option value="{{ status }}" {% if book.reading_status == status %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-accent w-100 mb-2" type="submit">Update status</button>
+        </form>
+        <form method="post" action="{{ url_for('toggle_reading_list', book_id=book.id) }}" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="action" value="remove">
+            <input type="hidden" name="next" value="list">
+            <input type="hidden" name="filter_status" value="{{ status_filter }}">
+            <button class="btn btn-ghost w-100" type="submit">Remove</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>{% if status_filter %}No books in this section yet.{% else %}Your reading list is a blank page.{% endif %}</h2>
+    <p>{% if status_filter %}Try another status or browse the catalogue for your next read.{% else %}Save a book you are curious about and it will be waiting here.{% endif %}</p>
+    <a class="btn btn-accent" href="{{ url_for('books') }}">Browse books</a>
+</div>
+{% endif %}
+{% endblock %}

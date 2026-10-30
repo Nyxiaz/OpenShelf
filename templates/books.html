@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "macros.html" import book_card %}
+
+{% block title %}OpenShelf · Explore{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">Catalogue</p>
+    <h1>Explore books</h1>
+    <p class="lead-text">Search by title or author, or filter by genre.</p>
+    <form class="catalogue-search" method="get" action="{{ url_for('books') }}">
+        <input class="form-control search-input" type="search" name="q" value="{{ search }}" placeholder="Search titles or authors">
+        {% if selected_genre %}
+        <input type="hidden" name="genre" value="{{ selected_genre }}">
+        {% endif %}
+        <button class="btn btn-accent" type="submit">Search</button>
+    </form>
+</section>
+
+{% if genres %}
+<nav class="genre-filters catalogue-genre-filters" aria-label="Filter books by genre">
+    <a class="genre-btn {% if not selected_genre %}active{% endif %}" href="{{ url_for('books', q=search) }}">All</a>
+    {% for genre in genres %}
+    <a class="genre-btn {% if selected_genre == genre %}active{% endif %}" href="{{ url_for('books', q=search, genre=genre) }}">{{ genre }}</a>
+    {% endfor %}
+</nav>
+{% endif %}
+
+{% if books %}
+<p class="result-count">{{ total }} book{% if total != 1 %}s{% endif %} found.</p>
+<div class="row g-4 book-grid">
+    {% for book in books %}
+    <div class="col-sm-6 col-xl-3">
+        {{ book_card(book) }}
+    </div>
+    {% endfor %}
+</div>
+{% if total_pages > 1 %}
+<nav class="pager" aria-label="Catalogue pages">
+    {% if page > 1 %}
+    <a class="btn btn-ghost" href="{{ url_for('books', q=search, genre=selected_genre, page=page-1) }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a class="btn btn-ghost" href="{{ url_for('books', q=search, genre=selected_genre, page=page+1) }}">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="empty-state">
+    {% if search or selected_genre %}
+    <p>No books match that search. Try a different title, author or genre.</p>
+    {% else %}
+    <p>The catalogue is empty. An administrator can add books from the dashboard.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

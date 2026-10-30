@@ -1,0 +1,32 @@
+{% macro cover_block(book) %}
+  <div class="cover cover-{{ book.cover_tone }}">
+    {% if book.cover_src %}
+      <img src="{{ book.cover_src }}" alt="Cover of {{ book.title }}">
+    {% else %}
+      <span aria-hidden="true">{{ book.title[:1] }}</span>
+    {% endif %}
+  </div>
+{% endmacro %}
+
+{% macro rating_line(book) %}
+  {% if book.avg_rating_display %}
+    <p class="rating-line">★ {{ book.avg_rating_display }} · {{ book.review_count }} review{% if book.review_count != 1 %}s{% endif %}</p>
+  {% else %}
+    <p class="rating-line">No ratings yet</p>
+  {% endif %}
+{% endmacro %}
+
+{% macro book_card(book) %}
+  <a class="book-card-link" href="{{ url_for('book_detail', book_id=book.id) }}">
+    <article class="book-card">
+      {{ cover_block(book) }}
+      <div class="card-body-copy">
+        <p class="genre-chip">{{ book.genre }}</p>
+        <h3>{{ book.title }}</h3>
+        <p class="author">{{ book.author }}</p>
+        {{ rating_line(book) }}
+        <span class="card-action">View book <span aria-hidden="true">→</span></span>
+      </div>
+    </article>
+  </a>
+{% endmacro %}

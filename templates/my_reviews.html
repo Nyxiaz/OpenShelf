@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}OpenShelf · My reviews{% endblock %}
+
+{% block content %}
+<section class="welcome-panel">
+    <p class="eyebrow">Library</p>
+    <h1>My reviews</h1>
+    <p class="lead-text">Reviews you have written, including those still waiting for approval.</p>
+</section>
+
+{% if reviews %}
+<div class="review-list">
+    {% for review in reviews %}
+    <article class="review-card">
+        <p class="status-badge status-{{ review.status }}">{{ review.status|capitalize }}</p>
+        <h2><a href="{{ url_for('book_detail', book_id=review.book_id) }}">{{ review.title }}</a></h2>
+        <p class="author">{{ review.author }} · ★ {{ review.rating }}</p>
+        <p class="review-text">{{ review.review_text }}</p>
+        <p class="review-meta">Updated {{ review.updated_at.strftime('%d %b %Y') }}</p>
+        <div class="inline-form">
+            <a class="btn btn-ghost" href="{{ url_for('book_detail', book_id=review.book_id) }}">Open book</a>
+            <form method="post" action="{{ url_for('delete_review', review_id=review.id) }}" onsubmit="return confirm('Delete this review?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button class="btn btn-ghost" type="submit">Delete review</button>
+            </form>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>Your review shelf is ready.</h2>
+    <p>When you share your thoughts on a book, your reviews and their moderation status will appear here.</p>
+    <a class="btn btn-accent" href="{{ url_for('books') }}">Find a book to review</a>
+</div>
+{% endif %}
+{% endblock %}

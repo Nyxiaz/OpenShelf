@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "macros.html" import book_card, cover_block, rating_line %}
+
+{% block title %}OpenShelf · Home{% endblock %}
+
+{% block content %}
+<section class="welcome-panel home-welcome">
+    <p class="eyebrow">Welcome to OpenShelf</p>
+    <h1>Find your next book, then talk about it.</h1>
+    <p class="lead-text">
+        Browse the catalogue, save titles to your reading list, and share a review when you are ready.
+    </p>
+    <a class="btn btn-accent" href="{{ url_for('books') }}">Explore books</a>
+</section>
+
+<section class="featured-section">
+    <div class="section-heading">
+        <h2>Featured this week</h2>
+        <p>Reader favourites, with the details you need to choose your next read.</p>
+    </div>
+    {% if featured_books %}
+    <div class="featured-grid">
+        {% for book in featured_books %}
+        <article class="featured-book">
+            <div class="featured-book-cover">
+                {{ cover_block(book) }}
+            </div>
+            <div class="featured-book-copy">
+                <p class="genre-chip">{{ book.genre }}</p>
+                <h3>{{ book.title }}</h3>
+                <p class="author">{{ book.author }}</p>
+                {{ rating_line(book) }}
+                {% if book.description %}
+                <p class="featured-description">{{ book.description }}</p>
+                {% endif %}
+                <a class="card-action" href="{{ url_for('book_detail', book_id=book.id) }}">View book <span aria-hidden="true">→</span></a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>No books have been added yet. An administrator can add titles from the dashboard.</p>
+    </div>
+    {% endif %}
+</section>
+
+<section class="explore-section" id="explore">
+    <div class="section-heading">
+        <h2>Recently added</h2>
+        <p>A few of the newest titles in the catalogue.</p>
+    </div>
+    {% if books %}
+    <div class="home-book-grid">
+        {% for book in books %}
+        {{ book_card(book) }}
+        {% endfor %}
+    </div>
+    <div class="section-footer">
+        <a class="btn btn-ghost" href="{{ url_for('books') }}">Explore the full catalogue</a>
+    </div>
+    {% elif featured_books %}
+    <div class="empty-state">
+        <p>No extra titles to show yet.</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
